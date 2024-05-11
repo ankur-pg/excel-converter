@@ -1,11 +1,24 @@
 const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
+const { parse, format } = require('date-fns');
 
 // Function to convert square feet to square meters
 function convertSqFtToSqM(value) {
     const sqFtToSqMFactor = 0.092903;
     return value * sqFtToSqMFactor;
+}
+
+function formatDate(value) {
+    if (!value) return '';
+    try {
+        // Parse the date assuming it's in 'dd/MM/yyyy' format
+        const date = parse(value, 'dd/MM/yyyy', new Date());
+        return format(date, 'ddMMyyyy'); // Format the date as 'ddMMyyyy'
+    } catch (error) {
+        console.error("Error formatting date:", error);
+        return '';
+    }
 }
 
 // Function to pad or trim the field according to the specified length
@@ -53,9 +66,9 @@ function convertExcelToDat(inputFile, outputFile) {
         { excelColumns: [], length: 8 },
         { excelColumns: [], length: 2 },
         { excelColumns: [], length: 10 },
-        { excelColumns: [], length: 9 },
+        { excelColumns: ["R"], length: 9 }, // PURCHASEAMOUNT - Client Value
         { excelColumns: [], length: 2 },
-        { excelColumns: ["Q", "R"], length: 8 }, // PURCHASEAMOUNT and LOANDATE (previously Q and R) - Client Value
+        { excelColumns: ["Q"], length: 8, formatter: formatDate }, // LOANDATE - Date
         { excelColumns: [], length: 26 },
         { excelColumns: [], length: 50 },
         { excelColumns: [], length: 1 },
@@ -64,11 +77,8 @@ function convertExcelToDat(inputFile, outputFile) {
 
     let outputContent = "";
     data.forEach((row, index) => {
-        if (index === 0) {
-            return
-        }
+        if (index === 0) return; // Skip headers
         let line = "";
-        console.log('Processing for ', row)
         mappings.forEach(mapping => {
             if (mapping.excelColumns.length === 0) {
                 line += formatField('', mapping.length, mapping.dummyChar || ' ');
@@ -76,15 +86,18 @@ function convertExcelToDat(inputFile, outputFile) {
                 let combinedValue = mapping.excelColumns.map(col => {
                     let value = row[col] || '';
                     if (mapping.convert) {
-                        value = mapping.convert(parseFloat(value)).toFixed(2); // Convert and format the value
+                        value = mapping.convert(parseFloat(value)).toFixed(2);
+                    }
+                    if (mapping.formatter) {
+                        console.log('Before formating - ', value)
+                        value = mapping.formatter(value);
+                        console.log('After formating - ', value)
                     }
                     return value;
                 }).join('');
                 line += formatField(combinedValue, mapping.length);
             }
         });
-
-        console.log("Formatted line:", line); // Log the formatted line
         outputContent += line + '\n';
     });
 
@@ -92,7 +105,7 @@ function convertExcelToDat(inputFile, outputFile) {
     console.log(`Data written to ${outputFile}`);
 }
 
-const inputFile = path.join(__dirname, 'Sample_6.xlsx');
-const outputFile = path.join(__dirname, 'Sample_6.dat');
+const inputFile = path.join(__dirname, 'Sample_7.xlsx');
+const outputFile = path.join(__dirname, 'Sample_7.dat');
 
 convertExcelToDat(inputFile, outputFile);
