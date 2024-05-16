@@ -72,7 +72,8 @@ function convertExcelToDat(inputFile, outputFile) {
         { excelColumns: [], length: 26 },
         { excelColumns: [], length: 50 },
         { excelColumns: [], length: 1 },
-        { excelColumns: [], length: 1 }
+        { excelColumns: [], length: 1 },
+        { excelColumns: ["C"], length: 90 }, // PROPERTY (previously C) - Property Type
     ];
 
     let outputContent = "";
@@ -89,9 +90,9 @@ function convertExcelToDat(inputFile, outputFile) {
                         value = mapping.convert(parseFloat(value)).toFixed(2);
                     }
                     if (mapping.formatter) {
-                        console.log('Before formating - ', value)
+                        // console.log('Before formating - ', value)
                         value = mapping.formatter(value);
-                        console.log('After formating - ', value)
+                        // console.log('After formating - ', value)
                     }
                     return value;
                 }).join('');
@@ -102,10 +103,10 @@ function convertExcelToDat(inputFile, outputFile) {
     });
 
     fs.writeFileSync(outputFile, outputContent);
-    console.log(`Data written to ${outputFile}`);
+    // console.log(`Data written to ${outputFile}`);
 }
 
-const inputFile = path.join(__dirname, 'Sample_7.xlsx');
-const outputFile = path.join(__dirname, 'Sample_7.dat');
+const inputFile = path.join(__dirname, 'Input1.xlsx');
+const outputFile = path.join(__dirname, 'Input1.dat');
 
 convertExcelToDat(inputFile, outputFile);
